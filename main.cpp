@@ -2,6 +2,23 @@
 #include <map>
 #include <exception>
 
+class EmptyListException :public std::exception
+{
+public:
+    const char* what() const noexcept override
+    {
+        return "List is empty";
+    }
+};
+class CntMoreZeroException :public std::exception
+{
+public:
+    const char* what() const noexcept override
+    {
+        return "Cnt should be more then zero";
+    }
+};
+
 class GOODS
 {
 private:
@@ -9,28 +26,33 @@ private:
 
     bool checkGoodIn(const auto& name)
     {
-        for(auto it = goods.begin(); it!=goods.end(); ++it)
-        {
-            if(it->first==name) return true;
-        }
-        return false;
+
+            for(auto it = goods.begin(); it!=goods.end(); ++it)
+            {
+                if(it->first==name) return true;
+            }
+            return false;
+
     }
 
     void getListOfStore()
     {
-        std::cout << "====================STORE===================" <<std::endl;
-        if (goods.empty()) std::cout << "no data found" << std::endl;
-        else {
-            //std::cout << "List of storage:" << std::endl;
-            for(auto it = goods.begin(); it!=goods.end();++it)
-            {
-                std::cout << it->first << ", cnt: " << it->second << std::endl;
-
+        try {
+            if (goods.size() == 0) {
+                throw EmptyListException();
             }
+            std::cout << "====================STORE===================" << std::endl;
+                //std::cout << "List of storage:" << std::endl;
+                for (auto it = goods.begin(); it != goods.end(); ++it) {
+                    std::cout << it->first << ", cnt: " << it->second << std::endl;
+            }
+            std::cout << "===========================================" << std::endl;
+        } catch (const EmptyListException& x)
+        {
+            std::cerr << x.what() << std::endl;
         }
-        std::cout << "===========================================" <<std::endl;
-    }
 
+    }
 
 public:
     //constructor
@@ -44,29 +66,39 @@ public:
 
     void addGood(std::string& name, int& cnt)
     {
-        try {
-            if(cnt < 1) throw "You should input cnt > 0";
-            if (!checkGoodIn(name)) goods.insert(std::make_pair(name, cnt));
-            else goods.at(name) += cnt;
-            getListOfStore();
-        }
-        catch (const char* x)
+        if(cnt < 1)
         {
-            std::cout << x << std::endl;
+            throw CntMoreZeroException();
         }
+        if (!checkGoodIn(name))
+        {
+            goods.insert(std::make_pair(name, cnt));
+        }
+        else
+        {
+            goods.at(name) += cnt;
+        }
+        getListOfStore();
     }
 
     void removeGood(std::string& name, int& cnt)
     {
-        try {
-            if(!checkGoodIn(name)) throw "try again! Invalid good";
-            if(cnt < 1) throw "You should input cnt > 0";
-            if (cnt>goods.at(name)) throw "You cant remove such";
-            else goods.at(name)-=cnt;
-
-        } catch (const char* x)
+        if(cnt < 1)
         {
-            std::cout << x << std::endl;
+            throw CntMoreZeroException();
+        }
+        if(!checkGoodIn(name))
+        {
+            std::cerr <<  "try again! Invalid good" << std::endl;
+        }
+        if (cnt>goods.at(name))
+        {
+            std::cerr << "You cant remove such" << std::endl <<
+                        goods.at(name) << " are available." << std::endl;;
+        }
+        else
+        {
+            goods.at(name)-=cnt;
         }
         getListOfStore();
     }
@@ -77,55 +109,47 @@ public:
     }
 };
 
-
+void getInput(std::string& name, int& cnt) {
+    std::cout << "Input name and cnt ";
+    std::cin >> name >> cnt;
+    if(!std::cin)
+    {
+        std::cin.clear();
+        throw std::invalid_argument("!CIN - cnt");
+    }
+}
 
 int main() {
     std::cout << "Cmd: add, removed, exit are available" << std::endl;
+
     GOODS goods;
-    std::string cmd;
+
+
     while (true)
     {
-        std::cout << "Input cmd ";
-        std::cin >> cmd;
-        std::string name;
-        int cnt;
-        if(cmd=="exit") break;
-        if(cmd=="add")
-        {
-            try {
-                std::cout << "Input name and cnt ";
+        try {
+            std::cout <<std::endl<< "Input cmd ";
+            std::string cmd,name;
 
-                std::cin >> name >> cnt;
-                if(!std::cin)
-                {
-                    std::cin.clear();
-                    throw "Invalid data!";
-                }
+            int cnt;
+            std::cin >> cmd ;
+            if (cmd == "exit") {
+                std::cout << "Exit from program" << std::endl;
+                break;
+            } else if (cmd == "add") {
+                getInput(name,cnt);
                 goods.addGood(name, cnt);
-            } catch(const char* x)
-            {
-                std::cout << x << std::endl;
-            }
-
-        }
-        if(cmd=="remove")
-        {
-            try {
-                if(goods.checkEmpty()) throw "Store is empty";
-                std::cout << "Input name and cnt ";
-                std::cin >> name >> cnt;
-                if (!std::cin)
-                {
-                    std::cin.clear();
-                    throw "Invalid data!";
-                }
-
+            } else if (cmd == "remove") {
+                getInput(name,cnt);
                 goods.removeGood(name, cnt);
             }
-            catch(const char* x)
-            {
-                std::cout << x << std::endl;
-            }
+        } catch (const std::invalid_argument& x)
+        {
+            std::cerr << "Caught invalid_argument: " << x.what() << std::endl;
+
+        } catch (const CntMoreZeroException& x)
+        {
+            std::cerr << "Runtime error: " << x.what() << std::endl;
         }
     }
     return 0;
