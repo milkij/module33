@@ -28,7 +28,7 @@ void setArr(T arr[8])
 }
 int main()
 {
-int arr[8];
+    int arr[8];
     setArr(arr);
     cout << "AVG is " << avg(arr);
 }
