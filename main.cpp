@@ -23,8 +23,8 @@ class REGISTRY {
 private:
     std::vector<DATA<T1,T2>> reg;
 public:
-    REGISTRY(){};
-    ~REGISTRY(){};
+    REGISTRY() = default;
+    ~REGISTRY() = default;
 
     auto add (const T1 _id, const T2 _value)
     {
